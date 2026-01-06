@@ -33,6 +33,83 @@
 - **Performance**: Sub-second response time, production-optimized
 - **Free & Open**: 100% free tools, no paid APIs, fully reproducible
 
+
+
+## 📸 Output Results & Platform Walkthrough
+
+This section presents real screenshots generated from the **Influenza Intelligence Platform**, demonstrating forecasting, risk stratification, deep insights, and report generation workflows.
+
+---
+
+### 🔹 1. Interactive Regional Dashboard (Map View)
+
+**Description:**  
+Select U.S. HHS regions interactively and configure forecast horizons using a map-based dashboard.
+
+![Interactive Regional Dashboard](flu_output/01_dashboard_map.png)
+
+---
+
+### 🔹 2. Week-wise ILI Forecast & Risk Prediction
+
+**Description:**  
+Displays historical Influenza-Like Illness (ILI) trends along with ML-based future forecasts, confidence shading, and predicted severity level.
+
+![Week-wise ILI Forecast](flu_output/02_weekly_forecast.png)
+
+---
+
+### 🔹 3. Virus Strain Evolution & Trend Comparison
+
+**Description:**  
+Shows long-term evolution and comparative trends of influenza virus strains including A/H1N1, A/H3N2, and B lineages.
+
+![Virus Strain Trends](flu_output/03_virus_trends.png)
+
+---
+
+### 🔹 4. Age–Virus Vulnerability Matrix
+
+**Description:**  
+Highlights age-group susceptibility across different influenza virus strains using an interpretable matrix.
+
+![Age-Virus Vulnerability Matrix](flu_output/04_age_vulnerability.png)
+
+---
+
+### 🔹 5. Deep Insights Analysis Dashboard
+
+**Description:**  
+Advanced epidemiological insights including:
+- Virus dominance  
+- Age-group risk distribution  
+- Pediatric mortality associations  
+- Bacterial co-infections  
+
+![Deep Insights Analysis](flu_output/05_deep_insights.png)
+
+---
+
+### 🔹 6. Automated Regional & Seasonal Reports
+
+**Description:**  
+Generates consolidated region-wise and season-wise reports covering virus dominance, lab efficiency, and short-term forecasts.
+
+![Reports Dashboard](flu_output/06_reports_dashboard.png)
+
+---
+
+### 🔹 7. Exportable PDF / Print-Ready Report
+
+**Description:**  
+One-click export of analytics into a clean, print-ready PDF format for reporting and decision support.
+
+![PDF Export Preview](flu_output/07_pdf_export.png)
+
+---
+
+
+
 ---
 
 ## 🚀 Quick Start
@@ -74,6 +151,16 @@ influenza_forecast_app/
 │
 ├── app.py                          # Main Flask application
 ├── requirements.txt                # Python dependencies
+── flu_output/
+│   ├── 01_dashboard_map.png
+│   ├── 02_weekly_forecast.png
+│   ├── 03_virus_trends.png
+│   ├── 04_age_vulnerability.png
+│   ├── 05_deep_insights.png
+│   ├── 06_reports_dashboard.png
+│   └── 07_pdf_export.png
+│
+└── README.md
 ├── README.md                       # This file
 │
 ├── data/                           # Data directory
