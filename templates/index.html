@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Influenza Intelligence Platform</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-icon active">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- Top Nav -->
+        <div class="top-nav">
+            <div>
+                <h1 style="font-size: 1.5rem; font-weight: 700;">Influenza Intelligence Platform</h1>
+                <p style="color: #666; font-size: 0.9rem;">Real-time epidemiological surveillance & forecasting</p>
+            </div>
+            <div class="nav-pills">
+                <div class="nav-pill active">Dashboard</div>
+                <a href="{{ url_for('insights') }}" style="text-decoration: none;"><div class="nav-pill">Deep Insights</div></a>
+                <a href="/reports" style="text-decoration: none;"><div class="nav-pill">Reports</div></a>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            
+            <!-- Left Panel -->
+            <div class="left-panel">
+                
+                <!-- Map Section -->
+                <div class="glass-card map-card" style="height: 400px;">
+                    <div id="map"></div>
+                </div>
+
+                {% if not forecast %}
+                <!-- Welcome Hero -->
+                <div class="glass-card" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white;">
+                    <h2 style="font-size: 2rem; margin-bottom: 10px;">Welcome to IIP</h2>
+                    <p style="opacity: 0.9; margin-bottom: 20px;">Select a region from the right panel to initialize the predictive engine.</p>
+                    <div style="display: flex; gap: 20px;">
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 12px;">
+                            <strong>Predictive Analytics</strong><br>
+                            <span style="font-size: 0.85rem; opacity: 0.8;">Ensemble ML models</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 12px;">
+                            <strong>Risk Stratification</strong><br>
+                            <span style="font-size: 0.85rem; opacity: 0.8;">Automated severity classification</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if history and forecast %}
+                <!-- Forecast Chart -->
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 20px; font-size: 1.1rem;">ILI Trend & Forecast</h3>
+                    <div style="height: 300px;">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if virus_evolution %}
+                <!-- Virus Evolution -->
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 20px; font-size: 1.1rem;">Virus Strain Evolution (2019-2025)</h3>
+                    <div style="height: 300px;">
+                        <canvas id="virusEvolutionChart"></canvas>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if age_virus_matrix %}
+                <!-- Age Matrix -->
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 20px; font-size: 1.1rem;">Age-Virus Vulnerability Matrix</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                            <thead>
+                                <tr style="background: #f9f9f9;">
+                                    <th style="padding: 12px;">Virus</th>
+                                    <th style="padding: 12px;">0-4 yrs</th>
+                                    <th style="padding: 12px;">5-24 yrs</th>
+                                    <th style="padding: 12px;">25-64 yrs</th>
+                                    <th style="padding: 12px;">65+ yrs</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in age_virus_matrix %}
+                                <tr style="border-bottom: 1px solid #eee;">
+                                    <td style="padding: 12px; font-weight: 600;">{{ row.virus }}</td>
+                                    <td style="padding: 12px; {{ row.style_0_4 }}">{{ "%.1f"|format(row.age_0_4) }}%</td>
+                                    <td style="padding: 12px; {{ row.style_5_24 }}">{{ "%.1f"|format(row.age_5_24) }}%</td>
+                                    <td style="padding: 12px; {{ row.style_25_64 }}">{{ "%.1f"|format(row.age_25_64) }}%</td>
+                                    <td style="padding: 12px; {{ row.style_65_plus }}">{{ "%.1f"|format(row.age_65_plus) }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+
+            <!-- Right Panel -->
+            <div class="right-panel">
+                
+                <!-- Control Panel -->
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 20px; font-size: 1.1rem;">Configuration</h3>
+                    <form method="POST">
+                        <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; color: #666;">Target Region</label>
+                        <select name="region" id="regionSelect" required>
+                            {% for r in regions %}
+                                <option value="{{ r }}" {% if region_selected == r %}selected{% endif %}>{{ r }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; color: #666;">Forecast Horizon</label>
+                        {% set selected_horizon = request.form.get('horizon', '1') %}
+                        <select name="horizon" required>
+                            <option value="1" {% if selected_horizon == '1' %}selected{% endif %}>1 Week Ahead</option>
+                            <option value="2" {% if selected_horizon == '2' %}selected{% endif %}>2 Weeks Ahead</option>
+                            <option value="3" {% if selected_horizon == '3' %}selected{% endif %}>3 Weeks Ahead</option>
+                            <option value="4" {% if selected_horizon == '4' %}selected{% endif %}>4 Weeks Ahead</option>
+                        </select>
+
+                        <button type="submit" class="primary-btn">Generate Forecast</button>
+                    </form>
+                </div>
+
+                {% if forecast %}
+                <!-- Key Metrics -->
+                <div class="glass-card security-status">
+                    <div style="font-size: 0.9rem; color: #856404; margin-bottom: 5px;">PREDICTED RISK LEVEL</div>
+                    <div style="font-size: 2rem; font-weight: 700; color: #856404; margin-bottom: 10px;">
+                        {% if severity %}{{ severity|upper }}{% else %}UNKNOWN{% endif %}
+                    </div>
+                    <div style="font-size: 0.9rem; color: #856404;">
+                        Next Week: <strong>{{ forecast[0] }}% ILI</strong>
+                    </div>
+                </div>
+
+                <!-- AI Insights -->
+                {% if explanation %}
+                <div class="glass-card" style="background: #F3F4F6;">
+                    <h3 style="margin-bottom: 12px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                        AI Analysis
+                    </h3>
+                    <div style="display:flex; align-items:flex-start; gap:12px; margin-bottom:8px;">
+                        <div id="ai-severity-badge" style="min-width:86px; text-align:center; padding:10px 12px; border-radius:10px; font-weight:700; color:#fff;">
+                            {{ severity if severity else 'Unknown' }}
+                        </div>
+                        <div style="flex:1;">
+                            <div style="font-weight:700; font-size:1rem; margin-bottom:6px;">{{ explanation.headline }}</div>
+                            <div style="font-size:0.95rem; color:#374151; margin-bottom:6px;">{{ explanation.insight }}</div>
+                            <div style="font-size:0.95rem; color:#374151; margin-bottom:6px;"><strong>Action:</strong> {{ explanation.action }}</div>
+                            <div style="font-size:0.9rem; color:#6b7280;"><strong>Confidence:</strong> {{ explanation.confidence }}</div>
+                        </div>
+                    </div>
+                    <script>
+                        // Color the severity badge
+                        (function(){
+                            try{
+                                const badge = document.getElementById('ai-severity-badge');
+                                const s = '{{ severity if severity else '' }}';
+                                if (s === 'Low') badge.style.background = '#10b981';
+                                else if (s === 'Medium') badge.style.background = '#f59e0b';
+                                else if (s === 'High') badge.style.background = '#ef4444';
+                                else badge.style.background = '#6b7280';
+                            }catch(e){console.error(e)}
+                        })();
+                    </script>
+                </div>
+                {% endif %}
+
+                {% if lab_efficiency %}
+                <!-- Lab Efficiency -->
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 15px; font-size: 1rem;">Lab Efficiency</h3>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="font-size: 0.9rem; color: #666;">Clinical Positivity</span>
+                        <span style="font-weight: 600;">{{ "%.1f"|format(lab_efficiency.clinical_avg_positivity) }}%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-size: 0.9rem; color: #666;">Public Health Positivity</span>
+                        <span style="font-weight: 600;">{{ "%.1f"|format(lab_efficiency.public_avg_positivity) }}%</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Gender distribution removed (estimated data not shown) -->
+
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Widget -->
+    <div class="chat-widget">
+        <div class="chat-button" onclick="toggleChat()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </div>
+        <div class="chat-window" id="chatWindow">
+            <div class="chat-header">
+                <span>AI Assistant</span>
+                <span style="cursor: pointer;" onclick="toggleChat()">×</span>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    Hello! I'm your Influenza Intelligence Assistant. Ask me about forecasts, risk levels, or virus trends.
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type a message...">
+                <button class="send-btn" onclick="sendMessage()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Chatbot Logic
+        function toggleChat() {
+            const chatWindow = document.getElementById('chatWindow');
+            if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
+                chatWindow.style.display = 'flex';
+            } else {
+                chatWindow.style.display = 'none';
+            }
+        }
+
+        document.getElementById('chatInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Chatbot Context
+        const chatContext = {
+            region: "{{ region_selected if region_selected else '' }}",
+            severity: "{{ severity if severity else '' }}",
+            age_risks: {{ age_risks | tojson if age_risks else '{}' }},
+            dominant_virus: ""
+        };
+
+        {% if subtype_data %}
+        try {
+            const subtypeData = {{ subtype_data | tojson }};
+            let maxCases = -1;
+            for (const [virus, cases] of Object.entries(subtypeData)) {
+                if (cases > maxCases) {
+                    maxCases = cases;
+                    chatContext.dominant_virus = virus;
+                }
+            }
+        } catch(e) {}
+        {% endif %}
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+
+            // Show loading or waiting state if needed
+            // ...
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        message: message,
+                        ...chatContext
+                    }),
+                });
+
+                const data = await response.json();
+                addMessage(data.response, 'bot');
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+            }
+        }
+
+        function addMessage(text, sender) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.textContent = text;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    </script>
+
+    <script>
+        // Chart.js Global Config
+        Chart.defaults.devicePixelRatio = 2;
+        Chart.defaults.font.family = "'Inter', -apple-system, sans-serif";
+        Chart.defaults.font.size = 11;
+        Chart.defaults.color = '#666';
+
+        // Severity Bands Plugin
+        const severityBands = {
+            id: 'severityBands',
+            beforeDraw(chart) {
+                const { ctx, chartArea, scales } = chart;
+                if (!chartArea) return;
+
+                ctx.save();
+                // Low Risk Zone (0-2%)
+                ctx.fillStyle = 'rgba(72, 187, 120, 0.05)';
+                ctx.fillRect(chartArea.left, scales.y.getPixelForValue(2), chartArea.right - chartArea.left, scales.y.getPixelForValue(0) - scales.y.getPixelForValue(2));
+                // Medium Risk Zone (2-5%)
+                ctx.fillStyle = 'rgba(237, 137, 54, 0.05)';
+                ctx.fillRect(chartArea.left, scales.y.getPixelForValue(5), chartArea.right - chartArea.left, scales.y.getPixelForValue(2) - scales.y.getPixelForValue(5));
+                // High Risk Zone (>5%)
+                ctx.fillStyle = 'rgba(245, 101, 101, 0.05)';
+                ctx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, scales.y.getPixelForValue(5) - chartArea.top);
+                ctx.restore();
+            }
+        };
+    </script>
+
+    {% if history and forecast %}
+    <!-- Forecast Data -->
+    <script id="history-data" type="application/json">{{ history | tojson }}</script>
+    <script id="forecast-data" type="application/json">{{ forecast | tojson }}</script>
+
+    <script>
+        const historyData = JSON.parse(document.getElementById("history-data").textContent);
+        const forecastData = JSON.parse(document.getElementById("forecast-data").textContent);
+
+        const historyLabels = historyData.map((_, i) => `Week -${historyData.length - i}`);
+        const forecastLabels = forecastData.map((_, i) => `Week +${i + 1}`);
+        const allLabels = [...historyLabels, ...forecastLabels];
+
+        // Build forecast dataset so it visually connects to the last observed point.
+        // We insert the last historical value at the last history index for the forecast
+        // dataset and keep nulls before that to avoid connecting back to earlier points.
+        const lastHistIdx = Math.max(0, historyData.length - 1);
+        const forecastDataset = [
+            ...Array(Math.max(0, historyData.length - 1)).fill(null),
+            historyData[lastHistIdx],
+            ...forecastData
+        ];
+
+        new Chart(document.getElementById("forecastChart"), {
+            type: "line",
+            data: {
+                labels: allLabels,
+                datasets: [
+                    {
+                        label: "Recent ILI",
+                        data: [...historyData, ...Array(forecastData.length).fill(null)],
+                        borderColor: "#168a80",
+                        backgroundColor: "rgba(22, 138, 128, 0.08)",
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#168a80',
+                        pointBorderWidth: 2
+                    },
+                    {
+                        label: "Forecast",
+                        // start the dashed line exactly at the last observed point
+                        data: forecastDataset,
+                        borderColor: "#f59e0b",
+                        backgroundColor: "rgba(245, 158, 11, 0.06)",
+                        borderWidth: 2,
+                        borderDash: [6, 4],
+                        fill: false,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#fff7ed',
+                        pointBorderColor: '#f59e0b',
+                        pointBorderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: {
+                    legend: { display: true, position: 'top', labels: { boxWidth: 12, usePointStyle: true } },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 10,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                const dsLabel = context.dataset.label || '';
+                                const val = context.parsed.y;
+                                if (val === null || val === undefined) return null;
+                                return `${dsLabel}: ${Number(val).toFixed(2)}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f0f0f0' },
+                        title: { display: true, text: 'ILI (% of outpatient visits)', font: { size: 12 }, padding: { top: 6 } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { maxTicksLimit: 8 },
+                        title: { display: true, text: 'Time (weeks — negative = past, positive = forecast)', font: { size: 12 }, padding: { top: 6 } }
+                    }
+                }
+            },
+            plugins: [
+                severityBands,
+                // Custom plugin: draw a subtle vertical marker and shaded region
+                {
+                    id: 'forecastStartMarker',
+                    afterDraw: (chart) => {
+                        const { ctx, chartArea, scales } = chart;
+                        if (!chartArea) return;
+
+                        // Determine pixel positions for the tick before/after the forecast
+                        try {
+                            const idxPrev = historyData.length - 1;
+                            const idxNext = historyData.length; // first forecast label index
+                            const xPrev = scales.x.getPixelForTick(idxPrev);
+                            const xNext = scales.x.getPixelForTick(idxNext);
+                            const xBoundary = (xPrev + xNext) / 2;
+
+                            ctx.save();
+
+                            // Shaded area for forecast region
+                            ctx.fillStyle = 'rgba(245, 158, 11, 0.04)';
+                            ctx.fillRect(xBoundary, chartArea.top, chartArea.right - xBoundary, chartArea.bottom - chartArea.top);
+
+                            // Vertical dashed divider
+                            ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+                            ctx.lineWidth = 1;
+                            ctx.setLineDash([4, 4]);
+                            ctx.beginPath();
+                            ctx.moveTo(xBoundary, chartArea.top);
+                            ctx.lineTo(xBoundary, chartArea.bottom);
+                            ctx.stroke();
+
+                            // Label above the chart
+                            const label = 'Forecast starts';
+                            ctx.font = '12px Inter, sans-serif';
+                            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                            ctx.textAlign = 'center';
+                            ctx.fillText(label, xBoundary, chartArea.top + 14);
+
+                            ctx.restore();
+                        } catch (e) {
+                            // If tick pixel lookup fails, silently skip drawing marker
+                        }
+                    }
+                },
+                // Plugin to draw numeric labels for forecast points (only predicted weeks)
+                {
+                    id: 'forecastDataLabels',
+                    afterDatasetsDraw: (chart) => {
+                        const { ctx, data, chartArea, scales } = chart;
+                        const forecastDsIndex = data.datasets.findIndex(d => d.label === 'Forecast');
+                        if (forecastDsIndex === -1) return;
+                        const ds = data.datasets[forecastDsIndex];
+                        ctx.save();
+                        ctx.fillStyle = 'rgba(0,0,0,0.65)';
+                        ctx.font = '11px Inter, sans-serif';
+                        ctx.textAlign = 'center';
+
+                        for (let i = 0; i < ds.data.length; i++) {
+                            // only label points that are after the history window (i >= historyData.length)
+                            if (i >= historyData.length) {
+                                const val = ds.data[i];
+                                if (val === null || val === undefined) continue;
+                                const x = scales.x.getPixelForTick(i);
+                                const y = scales.y.getPixelForValue(val);
+                                ctx.fillText(Number(val).toFixed(2) + '%', x, y - 8);
+                            }
+                        }
+
+                        ctx.restore();
+                    }
+                }
+            ]
+        });
+    </script>
+    {% endif %}
+
+    <!-- Virus Evolution Chart Script -->
+    {% if virus_evolution %}
+    <script id="virus-evolution-data" type="application/json">{{ virus_evolution | tojson }}</script>
+    <script>
+        const evolutionData = JSON.parse(document.getElementById("virus-evolution-data").textContent);
+        
+        const years = evolutionData.map(d => d.year);
+        const h1n1Data = evolutionData.map(d => d.cases_a_h1n1_pdm09);
+        const h3Data = evolutionData.map(d => d.cases_a_h3);
+        const bVictoriaData = evolutionData.map(d => d.cases_b_victoria);
+        const bYamagataData = evolutionData.map(d => d.cases_b_yamagata);
+
+        new Chart(document.getElementById("virusEvolutionChart"), {
+            type: "line",
+            data: {
+                labels: years,
+                datasets: [
+                    { label: "A/H1N1", data: h1n1Data, borderColor: "#ef4444", borderWidth: 2, tension: 0.4, pointRadius: 0 },
+                    { label: "A/H3N2", data: h3Data, borderColor: "#f59e0b", borderWidth: 2, tension: 0.4, pointRadius: 0 },
+                    { label: "B/Vic", data: bVictoriaData, borderColor: "#3b82f6", borderWidth: 2, tension: 0.4, pointRadius: 0 },
+                    { label: "B/Yam", data: bYamagataData, borderColor: "#8b5cf6", borderWidth: 2, tension: 0.4, pointRadius: 0 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 10 } },
+                    tooltip: {
+                        enabled: true,
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed.y ?? 0;
+                                return `${context.dataset.label}: ${value.toLocaleString()}`;
+                            }
+                        }
+                    }
+                },
+                interaction: { mode: 'nearest', intersect: false },
+                elements: { point: { radius: 0, hitRadius: 10, hoverRadius: 6 } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f0f0f0' },
+                        title: { display: true, text: 'Total confirmed cases', font: { size: 12 }, padding: { top: 6 } },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        title: { display: true, text: 'Year', font: { size: 12 }, padding: { top: 6 } }
+                    }
+                }
+            }
+        });
+    </script>
+    {% endif %}
+
+    <!-- Gender chart removed (estimated data not shown) -->
+
+    <!-- Map Script -->
+    <script id="region-map-data" type="application/json">{{ region_map | tojson }}</script>
+
+    <script>
+        const regionMap = JSON.parse(document.getElementById("region-map-data").textContent);
+        
+        const map = L.map("map", { zoomControl: false }).setView([37.8, -96], 4);
+        
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+            attribution: '© OpenStreetMap, © CartoDB'
+        }).addTo(map);
+
+        const regionCoords = {
+            "Region 1": [44.0, -71.5], "Region 2": [42.5, -75.0], "Region 3": [38.5, -77.5],
+            "Region 4": [33.5, -84.0], "Region 5": [42.0, -88.0], "Region 6": [32.0, -97.0],
+            "Region 7": [40.0, -95.0], "Region 8": [43.0, -107.0], "Region 9": [36.0, -119.0],
+            "Region 10": [46.0, -120.0]
+        };
+
+        for (const region in regionMap) {
+            const coords = regionCoords[region] || [37, -96];
+            const regionNum = region.replace('Region ', '');
+            const isSelected = region === "{{ region_selected }}";
+            
+            const icon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color: ${isSelected ? '#1A1A1A' : '#FFFFFF'}; color: ${isSelected ? '#FFFFFF' : '#1A1A1A'}; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 2px solid #1A1A1A;">${regionNum}</div>`,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+            
+            const marker = L.marker(coords, { icon: icon }).addTo(map);
+
+            marker.bindPopup(`
+                <div style="font-family: 'Inter', sans-serif; min-width: 150px;">
+                    <strong style="font-size: 0.9rem;">${region}</strong>
+                    <p style="margin: 5px 0; color: #666; font-size: 0.8rem;">
+                        ${regionMap[region].join(", ")}
+                    </p>
+                </div>
+            `);
+
+            marker.on('click', function() {
+                document.getElementById('regionSelect').value = region;
+            });
+        }
+    </script>
+
+</body>
+</html>

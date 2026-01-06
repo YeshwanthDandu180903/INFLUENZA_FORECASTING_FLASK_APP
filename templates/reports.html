@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: #fff; }
+        }
+        .nav-pill { padding: 8px 14px; border-radius: 20px; background: #f1f5f9; color: #334155; display: inline-block; }
+        .glass-card { background: #fff; border-radius: 14px; padding: 16px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08); }
+        select, button { padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 8px; }
+        .primary-btn { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: #fff; border: none; cursor: pointer; }
+        .secondary-btn { background: #fff; border: 1px solid #cbd5e1; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="main-content" style="padding: 20px;">
+        <div class="top-nav" style="justify-content: space-between;">
+            <div>
+                <h1 style="font-size: 1.5rem; font-weight: 700;">Reports</h1>
+                <p style="color: #666; font-size: 0.9rem;">Region & Season snapshots with export.</p>
+            </div>
+            <a href="/" class="nav-pill" style="text-decoration: none;">Back</a>
+        </div>
+
+        <div class="glass-card" style="margin-top: 15px;">
+            <form method="POST" class="no-print" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end;">
+                <div>
+                    <label style="font-size: 0.85rem; color: #666;">Region</label>
+                    <select name="region" required>
+                        {% for r in regions %}
+                        <option value="{{ r }}" {% if region_selected == r %}selected{% endif %}>{{ r }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 0.85rem; color: #666;">Season</label>
+                    <select name="season" required>
+                        {% for s in seasons %}
+                        <option value="{{ s }}" {% if selected_season == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" class="primary-btn">Update</button>
+                </div>
+                <div>
+                    <button type="button" class="secondary-btn" onclick="window.print()">Export PDF/Print</button>
+                </div>
+            </form>
+        </div>
+
+        {% if selected_season %}
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+            <div class="glass-card">
+                <h3 style="margin-bottom: 12px;">Virus Dominance</h3>
+                <div style="height: 280px;"><canvas id="virusChart"></canvas></div>
+            </div>
+            <div class="glass-card">
+                <h3 style="margin-bottom: 12px;">Age-Group Risk</h3>
+                <div style="height: 280px;"><canvas id="ageChart"></canvas></div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+            <div class="glass-card">
+                <h3 style="margin-bottom: 10px;">Lab Efficiency ({{ region_selected }})</h3>
+                {% if lab_eff %}
+                <ul style="line-height: 1.6;">
+                    <li>Clinical avg positivity: {{ lab_eff.clinical_avg_positivity | round(2) }}%</li>
+                    <li>Public avg positivity: {{ lab_eff.public_avg_positivity | round(2) }}%</li>
+                    <li>Clinical specimens: {{ lab_eff.clinical_specimens }}</li>
+                    <li>Public specimens: {{ lab_eff.public_specimens }}</li>
+                    <li>Efficiency ratio: {{ lab_eff.efficiency_ratio | round(2) }}</li>
+                </ul>
+                {% else %}
+                <p style="color: #666;">No lab data for this region.</p>
+                {% endif %}
+            </div>
+            <div class="glass-card">
+                <h3 style="margin-bottom: 10px;">Short Forecast</h3>
+                {% if forecast_blurb %}
+                <p style="margin: 0 0 8px 0; font-weight: 600;">{{ forecast_blurb.text }}</p>
+                {% if forecast_blurb.ili %}
+                <small style="color: #666;">Forecast horizon: {{ forecast_blurb.ili|length }} weeks — Values: {{ forecast_blurb.ili }}</small>
+                {% endif %}
+                {% else %}
+                <p style="color: #666;">No forecast available.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="glass-card" style="margin-top: 15px;">
+            <h3 style="margin-bottom: 10px;">Forecast Cases (Recent vs Next Weeks)</h3>
+            <div style="height: 260px;"><canvas id="forecastChart"></canvas></div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if selected_season %}
+    <script id="report-data" type="application/json">
+    {{ {
+        "viruses": virus_totals | map(attribute="virus") | list,
+        "totals": virus_totals | map(attribute="total_cases") | list,
+        "age": age_risks,
+        "forecast": forecast_series
+    } | tojson }}
+    </script>
+
+    <script>
+        Chart.register(ChartDataLabels);
+        Chart.defaults.font.family = "'Inter', -apple-system, sans-serif";
+        Chart.defaults.font.size = 11;
+        Chart.defaults.color = '#666';
+
+        const data = JSON.parse(document.getElementById("report-data").textContent);
+
+        new Chart(document.getElementById("virusChart"), {
+            type: "bar",
+            data: {
+                labels: data.viruses,
+                datasets: [{
+                    label: 'Cases',
+                    data: data.totals,
+                    backgroundColor: data.viruses.map(v => v === "{{ dominant_virus }}" ? "rgba(17, 153, 142, 0.8)" : "rgba(107, 114, 128, 0.2)"),
+                    borderColor: data.viruses.map(v => v === "{{ dominant_virus }}" ? "#11998e" : "#6b7280"),
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        anchor: 'end', align: 'top', color: '#666',
+                        font: { weight: 'bold' },
+                        formatter: Math.round
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { display: false },
+                        title: { display: true, text: 'Total confirmed cases', font: { size: 12 }, padding: { top: 6 } },
+                        ticks: { callback: function(v){ return Number(v).toLocaleString(); } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        title: { display: true, text: 'Virus strain', font: { size: 12 }, padding: { top: 6 } },
+                        ticks: { maxRotation: 45, minRotation: 0 }
+                    }
+                }
+            }
+        });
+
+        new Chart(document.getElementById("ageChart"), {
+            type: "doughnut",
+            data: {
+                labels: Object.keys(data.age),
+                datasets: [{
+                    data: Object.values(data.age),
+                    backgroundColor: ["#11998e", "#38ef7d", "#ffc107", "#f44336"],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: "70%",
+                plugins: {
+                    legend: { position: 'right', labels: { boxWidth: 10, usePointStyle: true } },
+                    datalabels: {
+                        display: true,
+                        color: '#fff',
+                        font: { weight: 'bold', size: 11 },
+                        formatter: (value) => `${value.toFixed(1)}%`
+                    }
+                }
+            }
+        });
+
+        // Forecast Chart (recent actuals + forecasted)
+        const fc = data.forecast || { recent: [], forecast: [] };
+        const recentLen = fc.recent ? fc.recent.length : 0;
+        const labels = [];
+        for (let i = recentLen; i > 0; i--) labels.push(`-W${i}`);
+        labels.reverse();
+        fc.forecast?.forEach((_, idx) => labels.push(`+W${idx+1}`));
+
+        // Build forecast dataset to visually connect to last observed point
+        const forecastDataset = [
+            ...Array(Math.max(0, recentLen - 1)).fill(null),
+            recentLen > 0 ? fc.recent[recentLen - 1] : null,
+            ... (fc.forecast || [])
+        ];
+
+        new Chart(document.getElementById("forecastChart"), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Recent ILI',
+                        data: [...fc.recent, ...Array(fc.forecast ? fc.forecast.length : 0).fill(null)],
+                        borderColor: '#168a80',
+                        backgroundColor: 'rgba(22, 138, 128, 0.08)',
+                        tension: 0.25,
+                        fill: true,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#168a80',
+                        pointBorderWidth: 2
+                    },
+                    {
+                        label: 'Forecast',
+                        data: forecastDataset,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.06)',
+                        tension: 0.25,
+                        fill: false,
+                        borderDash: [6,4],
+                        pointRadius: 4,
+                        pointBackgroundColor: '#fff7ed',
+                        pointBorderColor: '#f59e0b',
+                        pointBorderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    datalabels: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const ds = context.dataset.label || '';
+                                const v = context.parsed.y;
+                                return v == null ? null : `${ds}: ${Number(v).toFixed(2)}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { display: true, color: '#f0f0f0' },
+                        title: { display: true, text: 'ILI (% of outpatient visits)', font: { size: 12 }, padding: { top: 6 } }
+                    },
+                    x: { grid: { display: false }, title: { display: true, text: 'Time (weeks — negative = past, positive = forecast)', font: { size: 12 }, padding: { top: 6 } } }
+                }
+            },
+            plugins: [
+                // draw a subtle vertical marker and shaded forecast area
+                {
+                    id: 'forecastStartMarker',
+                    afterDraw: (chart) => {
+                        const { ctx, chartArea, scales } = chart;
+                        if (!chartArea) return;
+                        try {
+                            const idxPrev = recentLen - 1;
+                            const idxNext = recentLen;
+                            const xPrev = scales.x.getPixelForTick(idxPrev);
+                            const xNext = scales.x.getPixelForTick(idxNext);
+                            const xBoundary = (xPrev + xNext) / 2;
+                            ctx.save();
+                            ctx.fillStyle = 'rgba(245, 158, 11, 0.04)';
+                            ctx.fillRect(xBoundary, chartArea.top, chartArea.right - xBoundary, chartArea.bottom - chartArea.top);
+                            ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+                            ctx.lineWidth = 1;
+                            ctx.setLineDash([4,4]);
+                            ctx.beginPath();
+                            ctx.moveTo(xBoundary, chartArea.top);
+                            ctx.lineTo(xBoundary, chartArea.bottom);
+                            ctx.stroke();
+                            ctx.font = '12px Inter, sans-serif';
+                            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('Forecast starts', xBoundary, chartArea.top + 14);
+                            ctx.restore();
+                        } catch (e) {}
+                    }
+                },
+                // label forecast points
+                {
+                    id: 'reportForecastLabels',
+                    afterDatasetsDraw: (chart) => {
+                        const { ctx, data, scales } = chart;
+                        const dsIdx = data.datasets.findIndex(d => d.label === 'Forecast');
+                        if (dsIdx === -1) return;
+                        const ds = data.datasets[dsIdx];
+                        ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'center';
+                        for (let i = 0; i < ds.data.length; i++) {
+                            if (i >= recentLen) {
+                                const val = ds.data[i]; if (val == null) continue;
+                                const x = scales.x.getPixelForTick(i);
+                                const y = scales.y.getPixelForValue(val);
+                                ctx.fillText(Number(val).toFixed(2) + '%', x, y - 8);
+                            }
+                        }
+                        ctx.restore();
+                    }
+                }
+            ]
+        });
+    </script>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seasonal Influenza Insights</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-icon">
+            <a href="/" style="color: inherit;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- Top Nav -->
+        <div class="top-nav">
+            <div>
+                <h1 style="font-size: 1.5rem; font-weight: 700;">Deep Insights Analysis</h1>
+                <p style="color: #666; font-size: 0.9rem;">Historical patterns & vulnerability assessment</p>
+            </div>
+            <div class="nav-pills">
+                <a href="/" style="text-decoration: none;"><div class="nav-pill">Dashboard</div></a>
+                <div class="nav-pill active">Deep Insights</div>
+                <a href="/reports" style="text-decoration: none;"><div class="nav-pill">Reports</div></a>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            
+            <!-- Left Panel (Charts & Data) -->
+            <div class="left-panel">
+                
+                {% if selected_season %}
+                <!-- Charts Row -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+                    <!-- Virus Dominance Chart -->
+                    <div class="glass-card">
+                        <h3 style="margin-bottom: 20px; font-size: 1.1rem;">Virus Dominance</h3>
+                        <div style="height: 300px;">
+                            <canvas id="virusChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Age Distribution Chart -->
+                    <div class="glass-card">
+                        <h3 style="margin-bottom: 20px; font-size: 1.1rem;">Age-Group Risk</h3>
+                        <div style="height: 300px; display: flex; justify-content: center;">
+                            <canvas id="ageChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Age Table -->
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 20px; font-size: 1.1rem;">Age-wise Case Distribution</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f9f9f9;">
+                                <th style="padding: 12px; text-align: left;">Age Group</th>
+                                <th style="padding: 12px; text-align: center;">Percentage of Cases</th>
+                                <th style="padding: 12px; text-align: center;">Risk Level</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for group, value in age_risks.items() %}
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 12px; font-weight: 600;">{{ group }}</td>
+                                <td style="padding: 12px; text-align: center; color: #11998e; font-weight: 600;">{{ value | round(2) }}%</td>
+                                <td style="padding: 12px; text-align: center;">
+                                    {% set max_value = age_risks.values() | list | max %}
+                                    {% if value == max_value %}
+                                        <span style="background: #fed7d7; color: #742a2a; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">HIGHEST</span>
+                                    {% elif value > 20 %}
+                                        <span style="background: #feebc8; color: #7c2d12; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">ELEVATED</span>
+                                    {% else %}
+                                        <span style="background: #c6f6d5; color: #22543d; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">MODERATE</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Gender distribution removed (estimated data not shown) -->
+
+                <!-- Pediatric Risk Factors -->
+                {% if risk_conditions %}
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: #e53e3e;">⚠️ Flu-Associated Pediatric Deaths</h3>
+                    <div style="font-size: 0.85rem; color: #718096; margin-bottom: 12px;">Share of influenza-associated pediatric deaths where the condition was present</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                        {% for condition in risk_conditions %}
+                        <div style="background: #fff5f5; padding: 15px; border-radius: 12px; border: 1px solid #feb2b2;">
+                            <div style="font-weight: 600; color: #2d3748; margin-bottom: 5px; font-size: 0.9rem;">{{ condition.GROUP }}</div>
+                            <div style="font-size: 1.5rem; color: #e53e3e; font-weight: 700;">{{ condition.PERCENT|round(1) }}%</div>
+                            <div style="font-size: 0.8rem; color: #718096;">of flu-associated pediatric deaths</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if coinfections %}
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: #dd6b20;">🦠 Bacterial Co-Infections</h3>
+                    <div style="font-size: 0.85rem; color: #718096; margin-bottom: 12px;">Share of flu-associated pediatric deaths with a bacterial co-infection</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                        {% for infection in coinfections %}
+                        <div style="background: #fffaf0; padding: 15px; border-radius: 12px; border: 1px solid #fbd38d;">
+                            <div style="font-weight: 600; color: #2d3748; margin-bottom: 5px; font-size: 0.9rem;">{{ infection.GROUP }}</div>
+                            <div style="font-size: 1.5rem; color: #dd6b20; font-weight: 700;">{{ infection.PERCENT|round(1) }}%</div>
+                            <div style="font-size: 0.8rem; color: #718096;">of flu pediatric co-infections</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <!-- Empty State -->
+                <div class="glass-card" style="text-align: center; padding: 50px;">
+                    <h2 style="color: #11998e; margin-bottom: 15px;">Select a Season</h2>
+                    <p style="color: #666;">Choose an influenza season from the right panel to view detailed historical analysis.</p>
+                </div>
+                {% endif %}
+
+            </div>
+
+            <!-- Right Panel (Controls & Summary) -->
+            <div class="right-panel">
+                
+                <!-- Season Selector -->
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 20px; font-size: 1.1rem;">Configuration</h3>
+                    <form method="POST">
+                        <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; color: #666;">Select Season</label>
+                        <select name="season" required>
+                            {% for s in seasons %}
+                                <option value="{{ s }}" {% if selected_season == s %}selected{% endif %}>
+                                    {{ s }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="primary-btn">View Insights</button>
+                    </form>
+                </div>
+
+                {% if selected_season %}
+                <!-- Summary Card -->
+                <div class="glass-card" style="background: #f0fdf4; border-left: 4px solid #11998e;">
+                    <h3 style="margin-bottom: 15px; font-size: 1rem; color: #00695c;">Season Summary</h3>
+                    <div style="margin-bottom: 15px;">
+                        <strong style="font-size: 0.85rem; color: #11998e; display: block; margin-bottom: 4px;">DOMINANT STRAIN</strong>
+                        <span style="font-size: 1.1rem; font-weight: 600;">{{ dominant_virus }}</span>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <strong style="font-size: 0.85rem; color: #11998e; display: block; margin-bottom: 4px;">HIGHEST RISK GROUP</strong>
+                        <span style="font-size: 1.1rem; font-weight: 600;">{{ high_risk_group }}</span>
+                    </div>
+                    <div>
+                        <strong style="font-size: 0.85rem; color: #11998e; display: block; margin-bottom: 4px;">IMPLICATION</strong>
+                        <p style="font-size: 0.9rem; line-height: 1.4; color: #2d3748;">Targeted vaccination and early antiviral treatment are critical for the identified high-risk groups.</p>
+                    </div>
+                </div>
+
+                <!-- Risk Interpretation -->
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 15px; font-size: 1rem;">Risk Interpretation</h3>
+                    <p style="font-size: 0.9rem; line-height: 1.5; color: #666;">
+                        {{ risk_message }}
+                    </p>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Widget -->
+    <div class="chat-widget">
+        <div class="chat-button" onclick="toggleChat()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </div>
+        <div class="chat-window" id="chatWindow">
+            <div class="chat-header">
+                <span>AI Assistant</span>
+                <span style="cursor: pointer;" onclick="toggleChat()">×</span>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    Hello! I'm your Influenza Intelligence Assistant. Ask me about forecasts, risk levels, or virus trends.
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type a message...">
+                <button class="send-btn" onclick="sendMessage()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Chatbot Logic
+        function toggleChat() {
+            const chatWindow = document.getElementById('chatWindow');
+            if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
+                chatWindow.style.display = 'flex';
+            } else {
+                chatWindow.style.display = 'none';
+            }
+        }
+
+        document.getElementById('chatInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message }),
+                });
+
+                const data = await response.json();
+                addMessage(data.response, 'bot');
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+            }
+        }
+
+        function addMessage(text, sender) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.textContent = text;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    </script>
+
+    <!-- Chart.js Configuration -->
+    <script>
+        // Register DataLabels Plugin
+        Chart.register(ChartDataLabels);
+
+        // Chart.js Global Config
+        Chart.defaults.devicePixelRatio = 2;
+        Chart.defaults.font.family = "'Inter', -apple-system, sans-serif";
+        Chart.defaults.font.size = 11;
+        Chart.defaults.color = '#666';
+    </script>
+
+    {% if selected_season %}
+    <!-- SAFE DATA -->
+    <script id="insight-data" type="application/json">
+    {{ {
+        "viruses": virus_totals | map(attribute="virus") | list,
+        "totals": virus_totals | map(attribute="total_cases") | list,
+        "age": age_risks
+    } | tojson }}
+    </script>
+
+    <script>
+        const data = JSON.parse(document.getElementById("insight-data").textContent);
+
+        // Virus Bar Chart
+        new Chart(document.getElementById("virusChart"), {
+            type: "bar",
+            data: {
+                labels: data.viruses,
+                datasets: [{
+                    label: 'Cases',
+                    data: data.totals,
+                    backgroundColor: data.viruses.map(v => v === "{{ dominant_virus }}" ? "rgba(17, 153, 142, 0.8)" : "rgba(107, 114, 128, 0.2)"),
+                    borderColor: data.viruses.map(v => v === "{{ dominant_virus }}" ? "#11998e" : "#6b7280"),
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        anchor: 'end', align: 'top', color: '#666',
+                        font: { weight: 'bold' },
+                        formatter: Math.round
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { display: false },
+                        title: { display: true, text: 'Total confirmed cases', font: { size: 12 }, padding: { top: 6 } },
+                        ticks: {
+                            callback: function(value) { return value.toLocaleString(); }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        title: { display: true, text: 'Virus strain', font: { size: 12 }, padding: { top: 6 } },
+                        ticks: { maxRotation: 45, minRotation: 0 }
+                    }
+                }
+            }
+        });
+
+        // Age Donut Chart
+        new Chart(document.getElementById("ageChart"), {
+            type: "doughnut",
+            data: {
+                labels: Object.keys(data.age),
+                datasets: [{
+                    data: Object.values(data.age),
+                    backgroundColor: ["#11998e", "#38ef7d", "#ffc107", "#f44336"],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: "70%",
+                plugins: {
+                    legend: { position: 'right', labels: { boxWidth: 10, usePointStyle: true } },
+                    datalabels: {
+                        display: true,
+                        color: '#fff',
+                        font: { weight: 'bold', size: 11 },
+                        formatter: (value) => `${value.toFixed(1)}%`
+                    }
+                }
+            }
+        });
+    </script>
+    {% endif %}
+
+</body>
+</html>

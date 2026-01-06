@@ -1,0 +1,340 @@
+/* Modern Dashboard Theme - Inspired by Crextio */
+:root {
+    --bg-color: #FDFCF6;
+    --sidebar-bg: #1A1A1A;
+    --card-bg: #FFFFFF;
+    --accent-color: #E8F5E9; /* Soft Green */
+    --primary-text: #1A1A1A;
+    --secondary-text: #666666;
+    --highlight: #FFD54F; /* Soft Yellow */
+    --border-radius: 24px;
+    --card-shadow: 0 4px 20px rgba(0,0,0,0.03);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--primary-text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 80px;
+    background-color: var(--sidebar-bg);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 0;
+    border-top-right-radius: 30px;
+    border-bottom-right-radius: 30px;
+    z-index: 100;
+}
+
+.sidebar-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sidebar-icon.active {
+    background-color: #333;
+    color: white;
+}
+
+.sidebar-icon:hover {
+    background-color: #333;
+    color: white;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    padding: 20px 30px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.nav-pills {
+    display: flex;
+    background: white;
+    padding: 5px;
+    border-radius: 30px;
+    box-shadow: var(--card-shadow);
+}
+
+.nav-pill {
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--secondary-text);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.nav-pill.active {
+    background-color: var(--sidebar-bg);
+    color: white;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2.5fr 1fr;
+    gap: 25px;
+    height: calc(100vh - 100px);
+}
+
+.left-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* Cards */
+.glass-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(0,0,0,0.02);
+    transition: transform 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Map Section */
+.map-card {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--border-radius);
+}
+
+/* Stats Cards */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.mini-stat {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.stat-icon-bg {
+    width: 50px;
+    height: 50px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+/* Right Panel Components */
+.security-status {
+    background: #FFF8E1; /* Light Yellow */
+    text-align: center;
+    padding: 30px;
+}
+
+.history-panel {
+    background: var(--sidebar-bg);
+    color: white;
+    flex: 1;
+    padding: 30px;
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.history-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Chatbot */
+.chat-widget {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
+}
+
+.chat-button {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--sidebar-bg);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    transition: transform 0.3s;
+}
+
+.chat-button:hover {
+    transform: scale(1.1);
+}
+
+.chat-window {
+    position: absolute;
+    bottom: 80px;
+    right: 0;
+    width: 350px;
+    height: 500px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #eee;
+}
+
+.chat-header {
+    background: var(--sidebar-bg);
+    color: white;
+    padding: 20px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f9f9f9;
+}
+
+.message {
+    margin-bottom: 15px;
+    max-width: 80%;
+    padding: 10px 15px;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+
+.message.user {
+    background: var(--sidebar-bg);
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 2px;
+}
+
+.message.bot {
+    background: white;
+    color: #333;
+    border-bottom-left-radius: 2px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.chat-input-area {
+    padding: 15px;
+    background: white;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #eee;
+    border-radius: 20px;
+    outline: none;
+}
+
+.send-btn {
+    background: var(--sidebar-bg);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Form Elements Override */
+select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    background: #f9f9f9;
+    margin-bottom: 15px;
+}
+
+button.primary-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--sidebar-bg);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
