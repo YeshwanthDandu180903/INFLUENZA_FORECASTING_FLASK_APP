@@ -159,7 +159,7 @@ influenza_forecast_app/
 │   ├── 06_reports_dashboard.png
 │   └── 07_pdf_export.png
 │
-└── README.md
+
 ├── README.md                       # This file
 │
 ├── data/                           # Data directory
@@ -174,7 +174,8 @@ influenza_forecast_app/
 │
 ├── templates/                      # HTML templates
 │   ├── index.html                 # Main dashboard
-│   └── insights.html              # Seasonal insights page
+│   └── insights.html               # Seasonal insights page
+    └── reports.html             # reports page 
 │
 ├── static/                         # Static assets
 │   └── style.css                  # Custom styles (if any)
@@ -222,7 +223,7 @@ The system uses **rule-based AI** (no external APIs or black boxes) to generate 
 
 ### Model Architecture
 - **Algorithm**: Random Forest Regressor (100 trees)
-- **Features**: Lag-based time series (1, 2, 4, 8 weeks)
+- **Features**: Lag-based time series (1, 2, 4 weeks)
 - **Training**: Historical data from 2015-present
 - **Validation**: Out-of-sample testing with RMSE/MAE metrics
 
