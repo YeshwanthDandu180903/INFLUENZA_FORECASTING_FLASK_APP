@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🦠 AI-Driven Influenza Forecasting System
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
@@ -378,7 +377,3 @@ If this project helped you, please consider:
 *Free • Open Source • Scientifically Sound*
 
 </div>
-=======
-# INFLUENZA_FORECASTING_FLASK_APP
-> **A comprehensive, interpretable AI system for regional influenza forecasting and surveillance designed for public health decision support.**
->>>>>>> a88b1b7a332401c874b68614d2c43a2eabc73ff0
