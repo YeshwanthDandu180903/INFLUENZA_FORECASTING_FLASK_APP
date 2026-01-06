@@ -27,7 +27,7 @@
 - **Risk Distribution**: Age-group burden analysis with donut charts
 
 ### 🔬 Technical Excellence
-- **Model**: Random Forest ensemble with lag-based features (1, 2, 4, 8 weeks)
+- **Model**: Random Forest ensemble with lag-based features (1, 2, 4 weeks)
 - **Data**: CDC-style surveillance data from 2015-present
 - **Architecture**: Flask-based web application with modular design
 - **Performance**: Sub-second response time, production-optimized
@@ -355,9 +355,9 @@ If you use this system in research or publication, please cite:
 ## 📧 Contact
 
 For questions, feedback, or collaboration:
-- **Email**: your.email@example.com
+- **Email**: yeshwanthdandu2003@gmail.comm
 - **GitHub**: [@yourusername](https://github.com/yourusername)
-- **LinkedIn**: [Your Name](https://linkedin.com/in/yourname)
+- **LinkedIn**: [Your Name](https://www.linkedin.com/in/yeshwanthdandu/)
 
 ---
 
