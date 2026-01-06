@@ -201,6 +201,69 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+
+
+# ===============================
+# 🔐 Secrets / API Keys
+# ===============================
+api.txt
+*.env
+.env
+.env.*
+
+# ===============================
+# 📊 Data files (DO NOT PUSH)
+# ===============================
+data/
+flu_cases/
+*.csv
+*.xlsx
+
+# ===============================
+# 🧠 Trained ML Models
+# ===============================
+models/
+*.pkl
+*.joblib
+*.h5
+
+# ===============================
+# 🧪 RAG / Vector DB Artifacts
+# ===============================
+rag_model_data/
+*.index
+*.faiss
+
+# ===============================
+# 🐍 Python cache
+# ===============================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ===============================
+# 🖥️ OS / Editor files
+# ===============================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ===============================
+# 📝 Logs
+# ===============================
+*.log
+logs/
+
+# ===============================
+# 📦 Virtual Environments
+# ===============================
+venv/
+.env/
+.venv/
+
+
 # Marimo
 marimo/_static/
 marimo/_lsp/
