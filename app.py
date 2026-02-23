@@ -12,14 +12,15 @@ from utils.chatbot_logic import region_aware_response
 # ===============================
 BASE_DIR = Path(__file__).resolve().parent
 
-DATA_MAIN = BASE_DIR / "data" / "influenza_modeling_dataset_2015_present.csv"
-DATA_CLINICAL = BASE_DIR / "data" / "clinical_labs_cleaned_dataset.csv"
-DATA_PUBLIC = BASE_DIR / "data" / "public_health_labs_cleaned.csv"
-DATA_SEASON = BASE_DIR / "data" / "Virus_season.csv"
-DATA_PEDIATRIC = BASE_DIR / "data" / "Characteristics2.csv"
-DATA_PRE2015 = BASE_DIR / "data" / "pre_2015_clincal_labs.csv"
+DATA_DIR = BASE_DIR / "data" / "cleaned_datasets"
+DATA_MAIN = DATA_DIR / "influenza_modeling_dataset_2015_present.csv"
+DATA_CLINICAL = DATA_DIR / "clinical_labs_cleaned_dataset.csv"
+DATA_PUBLIC = DATA_DIR / "public_health_lab_cleaned_dataset.csv"
+DATA_SEASON = DATA_DIR / "Virus_season.csv"
+DATA_PEDIATRIC = DATA_DIR / "Characteristics2.csv"
+DATA_PRE2015 = DATA_DIR / "pre_2015_clincal_labs.csv"
 
-RF_MODEL_PATH = BASE_DIR / "models" / "rf_forecast_model.pkl"
+RF_MODEL_PATH = BASE_DIR / "models" / "models_ml" / "rf_forecast_model.pkl"
 
 TARGET = "ili_weighted_pct"
 LAGS = [1, 2, 4, 8]
@@ -33,9 +34,12 @@ df_public = pd.read_csv(DATA_PUBLIC)
 df_season = pd.read_csv(DATA_SEASON)
 df_pre2015 = pd.read_csv(DATA_PRE2015)
 
-# Load pediatric death characteristics
-df_pediatric = pd.read_csv(DATA_PEDIATRIC, skiprows=1)  # Skip header row
-df_pediatric.columns = ['SEASON', 'CHARACTERISTIC', 'GROUP', 'COUNT', 'PERCENT']
+# Load pediatric death characteristics (optional file)
+if DATA_PEDIATRIC.exists():
+    df_pediatric = pd.read_csv(DATA_PEDIATRIC, skiprows=1)  # Skip header row
+    df_pediatric.columns = ['SEASON', 'CHARACTERISTIC', 'GROUP', 'COUNT', 'PERCENT']
+else:
+    df_pediatric = pd.DataFrame(columns=['SEASON', 'CHARACTERISTIC', 'GROUP', 'COUNT', 'PERCENT'])
 
 
 # ===============================
@@ -91,9 +95,13 @@ chat_history = deque(maxlen=12)
 def forecast_future(df_region, horizon):
     history = df_region[TARGET].tolist()
     forecasts = []
+    feature_cols = [f"{TARGET}_lag_{l}" for l in LAGS]
 
     for _ in range(horizon):
-        X = np.array([history[-l] for l in LAGS]).reshape(1, -1)
+        X = pd.DataFrame(
+            [[history[-l] for l in LAGS]],
+            columns=feature_cols
+        )
         pred = model.predict(X)[0]
         forecasts.append(round(float(pred), 2))
         history.append(pred)
@@ -357,16 +365,30 @@ def get_lab_testing_efficiency(region):
     Compares positivity rates between lab types to identify testing gaps
     """
     clinical = df_clinical[df_clinical['region'] == region].tail(20)
-    public = df_public[df_public['region'] == region].tail(20)
-    
+    public   = df_public[df_public['region'] == region].tail(20)
+
+    # Public lab: compute positivity from case columns / total specimens
+    case_cols = [c for c in public.columns if c.startswith('cases_')]
+    public_cases      = public[case_cols].sum(axis=1)
+    public_total      = public['total_specimens_tested'].replace(0, float('nan'))
+    public_positivity = (public_cases / public_total * 100).mean()
+    public_positivity = float(public_positivity) if not pd.isna(public_positivity) else 0.0
+
+    clinical_positivity = float(clinical['percent_positive_overall'].mean()) \
+        if not clinical.empty else 0.0
+    clinical_specimens  = int(clinical['total_specimens_tested'].sum()) \
+        if 'total_specimens_tested' in clinical.columns else 0
+    public_specimens    = int(public['total_specimens_tested'].sum()) \
+        if not public.empty else 0
+
     efficiency = {
-        'clinical_avg_positivity': float(clinical['percent_positive_overall'].mean()),
-        'public_avg_positivity': float(public['percent_positive'].mean()),
-        'clinical_specimens': int(clinical['total_specimens_tested'].sum()),
-        'public_specimens': int(public['total_specimens_tested'].sum()),
-        'efficiency_ratio': float(clinical['percent_positive_overall'].mean() / public['percent_positive'].mean()) if public['percent_positive'].mean() > 0 else 1.0
+        'clinical_avg_positivity': clinical_positivity,
+        'public_avg_positivity':   public_positivity,
+        'clinical_specimens':      clinical_specimens,
+        'public_specimens':        public_specimens,
+        'efficiency_ratio': round(clinical_positivity / public_positivity, 2)
+            if public_positivity > 0 else 1.0
     }
-    
     return efficiency
 
 
@@ -793,4 +815,4 @@ def chat():
 
 
 if __name__ == "__main__":
-    # Vercel serverless deployment
+    app.run(debug=True)

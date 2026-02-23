@@ -228,8 +228,13 @@
         </div>
         <div class="chat-window" id="chatWindow">
             <div class="chat-header">
-                <span>AI Assistant</span>
-                <span style="cursor: pointer;" onclick="toggleChat()">×</span>
+                <span>🤖 AI Flu Assistant</span>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <!-- Expand / Shrink -->
+                    <span id="expandBtn" title="Expand" style="cursor:pointer;font-size:1.1rem;opacity:0.85;" onclick="toggleExpand()">⛶</span>
+                    <!-- Close -->
+                    <span style="cursor:pointer;font-size:1.2rem;" onclick="toggleChat()">×</span>
+                </div>
             </div>
             <div class="chat-messages" id="chatMessages">
                 <div class="message bot">
@@ -248,12 +253,34 @@
     <!-- Scripts -->
     <script>
         // Chatbot Logic
+        let chatExpanded = false;
+
         function toggleChat() {
             const chatWindow = document.getElementById('chatWindow');
             if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
                 chatWindow.style.display = 'flex';
             } else {
                 chatWindow.style.display = 'none';
+                // reset expanded state when closing
+                chatExpanded = false;
+                chatWindow.classList.remove('expanded');
+                document.getElementById('expandBtn').textContent = '⛶';
+                document.getElementById('expandBtn').title = 'Expand';
+            }
+        }
+
+        function toggleExpand() {
+            const chatWindow = document.getElementById('chatWindow');
+            const btn = document.getElementById('expandBtn');
+            chatExpanded = !chatExpanded;
+            if (chatExpanded) {
+                chatWindow.classList.add('expanded');
+                btn.textContent = '⊡';
+                btn.title = 'Shrink';
+            } else {
+                chatWindow.classList.remove('expanded');
+                btn.textContent = '⛶';
+                btn.title = 'Expand';
             }
         }
 

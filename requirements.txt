@@ -29,3 +29,4 @@ httpcore==1.0.4
 # Utilities
 # ===============================
 tqdm==4.66.1
+python-dotenv==1.0.1

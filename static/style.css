@@ -246,6 +246,15 @@ body {
     flex-direction: column;
     overflow: hidden;
     border: 1px solid #eee;
+    transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
+}
+
+.chat-window.expanded {
+    width: 680px;
+    height: 78vh;
+    bottom: 80px;
+    right: 0;
+    border-radius: 20px;
 }
 
 .chat-header {
