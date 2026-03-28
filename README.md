@@ -24,14 +24,41 @@ https://catalog.data.gov/dataset/influenza-surveillance-aa972
 
 
 
-# Original Dataset folder:
-https://drive.google.com/drive/folders/1jrwTkP0Ky-1bKofpvFITxiTGwCoosQon?usp=drive_link
+## 📂 Dataset Description
 
+This project uses influenza surveillance data to build an interpretable AI system for regional influenza forecasting and public health decision support.
 
-# Cleaned Datasets
-https://drive.google.com/drive/folders/1I5wXbbrV3i6kMy0slBRqBmB-TxaTrlRz?usp=drive_link
-> **A comprehensive, interpretable AI system for regional influenza forecasting and surveillance designed for public health decision support.**
+---
 
+### 🔗 Dataset Links
+
+- **Original Datasets**  
+  https://drive.google.com/drive/folders/1jrwTkP0Ky-1bKofpvFITxiTGwCoosQon?usp=drive_link  
+
+- **Cleaned Datasets**  
+  https://drive.google.com/drive/folders/1I5wXbbrV3i6kMy0slBRqBmB-TxaTrlRz?usp=drive_link  
+
+---
+
+## 📊 Original Datasets
+
+- **ILINet_region.csv** – Weekly outpatient influenza-like illness (ILI) data with regional and age-wise distribution.  
+- **ICL_NREVSS_Public_Health_Labs.csv** – Public health laboratory data showing influenza test counts and positivity rates.  
+- **ICL_NREVSS_Clinical_Labs.csv** – Clinical laboratory data containing influenza test results from healthcare providers.  
+- **ICL_NREVSS_Combined_prior_to_2015_16.csv** – Historical influenza laboratory dataset covering periods before 2015.  
+- **VirusViewBySeason.csv** – Seasonal influenza dataset showing virus strain distribution and age-wise case trends.  
+
+---
+
+## 🧹 Cleaned Datasets
+
+- **influenza_modeling_dataset_2015_present.csv** – Final merged dataset combining ILI and lab data for machine learning and forecasting.  
+- **public_health_lab_cleaned_dataset.csv** – Cleaned and standardized public health lab dataset with processed influenza metrics.  
+- **clinical_labs_cleaned_dataset.csv** – Cleaned clinical lab dataset with consistent structure and formatted variables.  
+- **pre_2015_clincal_labs.csv** – Processed historical dataset (pre-2015) maintained separately due to structural differences.  
+- **Virus_season.csv** – Feature-engineered seasonal dataset with derived metrics like age aggregates and ratios.  
+
+---
 ---
 
 ## 🌟 Features
