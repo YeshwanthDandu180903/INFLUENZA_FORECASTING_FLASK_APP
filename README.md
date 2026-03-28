@@ -5,6 +5,25 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)](https://github.com)
 
+
+
+## Dataset Source
+
+The datasets used in this project are obtained from the CDC FluView Interactive portal:
+
+https://gis.cdc.gov/grasp/fluview/fluportaldashboard.html
+
+This includes:
+- ILINet (Influenza-like illness data)
+- NREVSS Public Health Laboratory data
+- NREVSS Clinical Laboratory data
+- Seasonal influenza datasets
+
+Additional reference:
+https://catalog.data.gov/dataset/influenza-surveillance-aa972
+
+
+
 # Original Dataset folder:
 https://drive.google.com/drive/folders/1jrwTkP0Ky-1bKofpvFITxiTGwCoosQon?usp=drive_link
 
